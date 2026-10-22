@@ -52,15 +52,15 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_CONFIDENCE,
         help=f"Confidence threshold. Default: {DEFAULT_CONFIDENCE}.",
     )
-    parser.add_argument("--gpu", type=int, default=0, help="CUDA device index.")
-    parser.add_argument("--min-area", type=float, default=20.0)
-    parser.add_argument("--contour-dilate-px", type=int, default=3)
-    parser.add_argument("--dilate-px", type=int, default=5)
-    parser.add_argument("--smooth-sigma", type=float, default=6.0)
-    parser.add_argument("--trim-angle", type=float, default=60.0)
-    parser.add_argument("--merge-dist-px", type=float, default=60.0)
-    parser.add_argument("--merge-max-angle", type=float, default=30.0)
-    parser.add_argument("--merge-max-turn", type=float, default=40.0)
+    parser.add_argument("--gpu", type=int, default=0, help="CUDA device index; -1 runs on CPU.")
+    parser.add_argument("--min-area", type=float, default=20.0, help="Minimal mask area, px.")
+    parser.add_argument("--contour-dilate-px", type=int, default=3, help="Isotropic mask dilation before skeletonization, px.")
+    parser.add_argument("--dilate-px", type=int, default=5, help="Dilation along the principal axis of a mask, px.")
+    parser.add_argument("--smooth-sigma", type=float, default=6.0, help="Gaussian smoothing of the centerline, px.")
+    parser.add_argument("--trim-angle", type=float, default=60.0, help="Trim sharp bends at centerline ends, degrees.")
+    parser.add_argument("--merge-dist-px", type=float, default=60.0, help="Maximal gap between merged fragments, px.")
+    parser.add_argument("--merge-max-angle", type=float, default=30.0, help="Maximal angle between merged fragments, degrees.")
+    parser.add_argument("--merge-max-turn", type=float, default=40.0, help="Maximal direction change at a merge junction, degrees.")
     return parser.parse_args()
 
 

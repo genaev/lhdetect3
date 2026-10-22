@@ -1,0 +1,7 @@
+protocol,file,width,height,source
+wheat,wheat/1520_3_1_1a_png.rf.yqETPbIIqlfoXhtekWTv.png,1388,1040,merged_dataset/train/1520_3_1_1a_png.rf.yqETPbIIqlfoXhtekWTv.png
+wheat,wheat/1527_9_2_1a_png.rf.nbU2Wwsz58U3b1Css1y8.png,1388,1040,merged_dataset/train/1527_9_2_1a_png.rf.nbU2Wwsz58U3b1Css1y8.png
+soy_protocol_1,soy_protocol_1/st1-c-1_jpg.rf.z6XtxoPdMBuZujaOXq5P.jpg,1920,1370,merged_dataset/train/st1-c-1_jpg.rf.z6XtxoPdMBuZujaOXq5P.jpg
+soy_protocol_1,soy_protocol_1/188-в-2_jpg.rf.Upf176DZVjIxGsF7o3Hk.jpg,1920,1370,merged_dataset/train/188-в-2_jpg.rf.Upf176DZVjIxGsF7o3Hk.jpg
+soy_protocol_2,soy_protocol_2/178n1_jpg.rf.XB34viuKhREf9KnYafwj.jpg,3584,2748,merged_dataset/train/178n1_jpg.rf.XB34viuKhREf9KnYafwj.jpg
+soy_protocol_2,soy_protocol_2/146v3_jpg.rf.gnOKGv8USkkBWj0w42lB.jpg,3584,2748,merged_dataset/train/146v3_jpg.rf.gnOKGv8USkkBWj0w42lB.jpg

@@ -19,7 +19,7 @@ from centerline import _Instance, _compute_centerline, _fill_holes, _merge_insta
 
 REPO_DIR = Path(__file__).resolve().parent
 DEFAULT_WEIGHTS = REPO_DIR / "weights" / "rfdetrseg_small_wheat_soy.pth"
-DEFAULT_CONFIDENCE = 0.35
+DEFAULT_CONFIDENCE = 0.37
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
 

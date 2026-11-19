@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lhdetect3-gui"
+version = "1.1.0"
+description = "Desktop application for counting leaf trichomes and measuring their lengths (RF-DETR-Seg, ONNX Runtime)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Mikhail Genaev" }]
+# ONNX Runtime is not listed here: install exactly one of the variants
+# (onnxruntime, onnxruntime-gpu, onnxruntime-directml, onnxruntime-migraphx),
+# install.sh chooses it for your hardware.
+dependencies = [
+    "numpy>=1.24",
+    "pillow>=10",
+    "opencv-python-headless>=4.8",
+    "PySide6-Essentials>=6.5",
+]
+
+[project.optional-dependencies]
+cpu = ["onnxruntime>=1.18"]
+cuda = ["onnxruntime-gpu[cuda,cudnn]>=1.20"]
+directml = ["onnxruntime-directml>=1.18"]
+
+[project.gui-scripts]
+lhdetect3 = "lhdetect3_gui.app:main"
+
+[project.scripts]
+lhdetect3-cli = "lhdetect3_gui.cli:main"
+
+[tool.setuptools]
+packages = ["lhdetect3_gui"]
+
+[tool.setuptools.package-data]
+lhdetect3_gui = ["models/*.onnx", "models/*.jpg", "resources/*"]

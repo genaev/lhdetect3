@@ -2,8 +2,9 @@
 """Count trichomes and measure their lengths with RF-DETR-Seg.
 
 The checkpoint is the soybean + wheat RF-DETR-Seg Small model. For every
-image the script writes one CSV row with the instance count and the
-centerline length of each trichome, in pixels.
+image the script writes one CSV row with the number of detected trichomes,
+the number of them whose mask could be measured, and the centerline length
+of each measured trichome, in pixels.
 """
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
-from centerline import _Instance, _compute_centerline, _fill_holes, _merge_instances
+from centerline import SIGMA, fill_holes, measure_mask
 
 REPO_DIR = Path(__file__).resolve().parent
 DEFAULT_WEIGHTS = REPO_DIR / "weights" / "rfdetrseg_small_wheat_soy.pth"
@@ -53,14 +54,9 @@ def parse_args() -> argparse.Namespace:
         help=f"Confidence threshold. Default: {DEFAULT_CONFIDENCE}.",
     )
     parser.add_argument("--gpu", type=int, default=0, help="CUDA device index; -1 runs on CPU.")
-    parser.add_argument("--min-area", type=float, default=20.0, help="Minimal mask area, px.")
-    parser.add_argument("--contour-dilate-px", type=int, default=3, help="Isotropic mask dilation before skeletonization, px.")
-    parser.add_argument("--dilate-px", type=int, default=5, help="Dilation along the principal axis of a mask, px.")
-    parser.add_argument("--smooth-sigma", type=float, default=6.0, help="Gaussian smoothing of the centerline, px.")
-    parser.add_argument("--trim-angle", type=float, default=60.0, help="Trim sharp bends at centerline ends, degrees.")
-    parser.add_argument("--merge-dist-px", type=float, default=60.0, help="Maximal gap between merged fragments, px.")
-    parser.add_argument("--merge-max-angle", type=float, default=30.0, help="Maximal angle between merged fragments, degrees.")
-    parser.add_argument("--merge-max-turn", type=float, default=40.0, help="Maximal direction change at a merge junction, degrees.")
+    parser.add_argument("--min-area", type=float, default=20.0,
+                        help="Masks smaller than this (px) are counted but not measured.")
+    parser.add_argument("--smooth-sigma", type=float, default=SIGMA, help="Gaussian smoothing of the centerline, px.")
     return parser.parse_args()
 
 
@@ -118,45 +114,25 @@ def load_rgb(image_path: Path):
     return Image.fromarray(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
 
 
-def instance_lengths(mask_stack, args) -> list[float]:
+def instance_lengths(mask_stack, args) -> list[float | None]:
+    """Centerline length of every detected trichome; None if its mask is too small."""
     import cv2
     import numpy as np
 
-    if mask_stack is None or len(mask_stack) == 0:
-        return []
-
-    instances = []
+    lengths: list[float | None] = []
+    if mask_stack is None:
+        return lengths
     for mask in mask_stack:
         mask = np.asarray(mask)
         if mask.ndim == 3:
             mask = mask.squeeze(0)
-        mask_u8 = np.where(mask > 0.5, 255, 0).astype(np.uint8)
-        mask_u8 = _fill_holes(mask_u8)
-        contours, _ = cv2.findContours(mask_u8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
+        mask_u8 = fill_holes(np.where(mask > 0.5, 255, 0).astype(np.uint8))
+        if cv2.countNonZero(mask_u8) < args.min_area:
+            lengths.append(None)
             continue
-        contour = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(contour) < args.min_area:
-            continue
-        length, path = _compute_centerline(
-            mask_u8,
-            contour,
-            args.contour_dilate_px,
-            args.dilate_px,
-            smooth_sigma=args.smooth_sigma,
-            trim_angle_deg=args.trim_angle,
-        )
-        instances.append(_Instance(mask=mask_u8, contour=contour, path=path, length=length))
-
-    instances = _merge_instances(
-        instances,
-        args.merge_dist_px,
-        args.merge_max_angle,
-        max_turn=args.merge_max_turn,
-        smooth_sigma=args.smooth_sigma,
-        trim_angle_deg=args.trim_angle,
-    )
-    return [float(instance.length) for instance in instances if not instance.merged]
+        length, _ = measure_mask(mask_u8, sigma=args.smooth_sigma)
+        lengths.append(float(length) if length > 0 else None)
+    return lengths
 
 
 def predict_lengths(model, image_path: Path, args) -> list[float] | None:
@@ -207,7 +183,7 @@ def main() -> None:
     with output.open("a" if done else "w", newline="") as handle:
         writer = csv.writer(handle)
         if write_header:
-            writer.writerow(["image", "count", "lengths_px"])
+            writer.writerow(["image", "count", "n_measured", "lengths_px"])
             handle.flush()
         for index, image_path in enumerate(images, start=1):
             relative = image_path.relative_to(root).as_posix()
@@ -218,8 +194,9 @@ def main() -> None:
                 skipped += 1
                 print(f"[{index}/{len(images)}] skip unreadable file: {relative}")
                 continue
-            formatted = ";".join(f"{length:.1f}" for length in lengths)
-            writer.writerow([relative, len(lengths), formatted])
+            measured = [length for length in lengths if length is not None]
+            formatted = ";".join(f"{length:.1f}" for length in measured)
+            writer.writerow([relative, len(lengths), len(measured), formatted])
             handle.flush()
             print(f"[{index}/{len(images)}] {relative}: count={len(lengths)}")
 

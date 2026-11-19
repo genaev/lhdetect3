@@ -1,0 +1,8 @@
+# Packages of the Windows build. onnxruntime-directml runs the model on any
+# DirectX 12 GPU (AMD, NVIDIA, Intel) and on the CPU.
+onnxruntime-directml>=1.20,<1.25
+PySide6-Essentials>=6.7
+numpy>=1.26
+opencv-python-headless>=4.9
+pillow>=10
+pyinstaller>=6.10
